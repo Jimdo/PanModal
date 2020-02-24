@@ -172,6 +172,14 @@ public protocol PanModalPresentable: AnyObject {
      Default value is true.
      */
     var showDragIndicator: Bool { get }
+    
+    /**
+    A flag to determine if a parent view controller should call viewWillAppear, viewWillDisappear,
+    viewDidAppear, viewDidDisappear methods when the view presents or dismisses.
+
+    Default value is true.
+    */
+    var shouldNotifyParentViewHierarchyUpdate: Bool { get }
 
     /**
      Asks the delegate if the pan modal should respond to the pan modal gesture recognizer.

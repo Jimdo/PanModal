@@ -72,7 +72,9 @@ public class PanModalPresentationAnimator: NSObject {
         let presentable = panModalLayoutType(from: transitionContext)
 
         // Calls viewWillAppear and viewWillDisappear
-        fromVC.beginAppearanceTransition(false, animated: true)
+        if presentable?.shouldNotifyParentViewHierarchyUpdate ?? true {
+            fromVC.beginAppearanceTransition(false, animated: true)
+        }
         
         // Presents the view in shortForm position, initially
         let yPos: CGFloat = presentable?.shortFormYPos ?? 0.0
@@ -93,7 +95,9 @@ public class PanModalPresentationAnimator: NSObject {
             panView.frame.origin.y = yPos
         }, config: presentable) { [weak self] didComplete in
             // Calls viewDidAppear and viewDidDisappear
-            fromVC.endAppearanceTransition()
+            if presentable?.shouldNotifyParentViewHierarchyUpdate ?? true {
+                fromVC.endAppearanceTransition()
+            }
             transitionContext.completeTransition(didComplete)
             self?.feedbackGenerator = nil
         }
@@ -109,10 +113,13 @@ public class PanModalPresentationAnimator: NSObject {
             let fromVC = transitionContext.viewController(forKey: .from)
             else { return }
 
-        // Calls viewWillAppear and viewWillDisappear
-        toVC.beginAppearanceTransition(true, animated: true)
-        
         let presentable = panModalLayoutType(from: transitionContext)
+        
+        // Calls viewWillAppear and viewWillDisappear
+        if presentable?.shouldNotifyParentViewHierarchyUpdate ?? true {
+            toVC.beginAppearanceTransition(true, animated: true)
+        }
+        
         let panView: UIView = transitionContext.containerView.panContainerView ?? fromVC.view
 
         PanModalAnimator.animate({
@@ -120,7 +127,9 @@ public class PanModalPresentationAnimator: NSObject {
         }, config: presentable) { didComplete in
             fromVC.view.removeFromSuperview()
             // Calls viewDidAppear and viewDidDisappear
-            toVC.endAppearanceTransition()
+            if presentable?.shouldNotifyParentViewHierarchyUpdate ?? true {
+                toVC.endAppearanceTransition()
+            }
             transitionContext.completeTransition(didComplete)
         }
     }
