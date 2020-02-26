@@ -219,20 +219,21 @@ open class PanModalPresentationController: UIPresentationController {
     /**
      Update presented view size in response to size class changes
      */
-    override public func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
-        super.viewWillTransition(to: size, with: coordinator)
-
+    override public func viewWillTransition(to size: CGSize, with coordinator:
+        UIViewControllerTransitionCoordinator) {
+        let panContainerSize = self.panContainerView.frame.size
         coordinator.animate(alongsideTransition: { [weak self] _ in
             guard
                 let self = self,
                 let presentable = self.presentable
                 else { return }
 
-            self.adjustPresentedViewFrame()
+            self.adjustPresentedViewFrame(with: panContainerSize)
             if presentable.shouldRoundTopCorners {
                 self.addRoundedCorners(to: self.presentedView)
             }
         })
+        super.viewWillTransition(to: size, with: coordinator)
     }
 
 }
@@ -355,7 +356,7 @@ private extension PanModalPresentationController {
     /**
      Reduce height of presentedView so that it sits at the bottom of the screen
      */
-    func adjustPresentedViewFrame() {
+    func adjustPresentedViewFrame(with size: CGSize? = nil) {
 
         guard let frame = containerView?.frame
             else { return }
@@ -363,12 +364,7 @@ private extension PanModalPresentationController {
         let adjustedSize = CGSize(width: frame.size.width, height: frame.size.height - anchoredYPosition)
         let panFrame = panContainerView.frame
         panContainerView.frame.size = frame.size
-        
-        if ![shortFormYPosition, longFormYPosition].contains(panFrame.origin.y) {
-            // if the container is already in the correct position, no need to adjust positioning
-            // (rotations & size changes cause positioning to be out of sync)
-            adjust(toYPosition: panFrame.origin.y - panFrame.height + frame.height)
-        }
+        adjust(toYPosition: panFrame.origin.y - panFrame.height + frame.height, size: size)
         panContainerView.frame.origin.x = frame.origin.x
         presentedViewController.view.frame = CGRect(origin: .zero, size: adjustedSize)
     }
@@ -641,10 +637,16 @@ private extension PanModalPresentationController {
     }
 
     /**
-     Sets the y position of the presentedView & adjusts the backgroundView.
-     */
-    func adjust(toYPosition yPos: CGFloat) {
-        presentedView.frame.origin.y = max(yPos, anchoredYPosition)
+    Sets the y position of the presentedView & adjusts the backgroundView.
+    - Parameters:
+       - size: comes from the orientation change action. It contains a previous pan container view size.
+    */
+    func adjust(toYPosition yPos: CGFloat, size: CGSize? = nil) {
+        if let size = size, size.width > size.height && presentedView.frame.width < presentedView.frame.height {
+            presentedView.frame.origin.y = min(yPos, anchoredYPosition)
+        } else {
+            presentedView.frame.origin.y = max(yPos, anchoredYPosition)
+        }
         
         guard presentedView.frame.origin.y > shortFormYPosition else {
             backgroundView.dimState = .max
